@@ -151,3 +151,11 @@ Conncetion string - mongodb+srv://preetisohnirobotronix_db_user:<db_password>@cl
 
 
 
+############# workflow ################
+
+* constants
+* config entity
+* artifact entity
+* component
+* pipeline
+* app.py /demo.py
