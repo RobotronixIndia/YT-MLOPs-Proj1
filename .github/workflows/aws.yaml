@@ -1,3 +1,88 @@
+# # # name: Deploy Application Docker Image to EC2 instance
+
+# # # on:
+# # #   push:
+# # #     branches: [main]
+
+# # # jobs:
+# # #   Continuous-Integration:
+# # #     runs-on: ubuntu-latest
+
+# # #     steps:
+# # #       - name: Checkout
+# # #         uses: actions/checkout@v2
+
+# # #       - name: Configure AWS credentials
+# # #         uses: aws-actions/configure-aws-credentials@v1
+# # #         with:
+# # #           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+# # #           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+# # #           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+# # #       - name: Login to Amazon ECR
+# # #         id: login-ecr
+# # #         uses: aws-actions/amazon-ecr-login@v1
+
+# # #       - name: Build, tag, and push image to Amazon ECR
+# # #         id: build-image
+# # #         env:
+# # #           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+# # #           ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
+# # #           IMAGE_TAG: latest
+# # #         run: |
+# # #           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .  
+# # #           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+# # #           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+# # #   Continuous-Deployment:
+# # #     needs: Continuous-Integration
+# # #     runs-on: self-hosted
+# # #     steps:
+# # #       - name: Checkout
+# # #         uses: actions/checkout@v3
+
+# # #       - name: Configure AWS credentials
+# # #         uses: aws-actions/configure-aws-credentials@v1
+# # #         with:
+# # #           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+# # #           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+# # #           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+# # #       - name: Login to Amazon ECR
+# # #         id: login-ecr
+# # #         uses: aws-actions/amazon-ecr-login@v1
+
+# # #       - name: Run Docker Image to serve users
+# # #         run: |
+# # #          docker run -d -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" -e AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}" -e MONGODB_URL="${{ secrets.MONGODB_URL }}" -p 5000:5000 "${{ steps.login-ecr.outputs.registry }}"/"${{ secrets.ECR_REPO }}":latest
+
+
+
+
+# # # # name: Deploy Application Docker Image to EC2 instance
+
+# # # # on:
+# # # #   push:
+# # # #     branches: [main]
+
+# # # # jobs:
+# # # #   Continuous-Integration:
+# # # #     runs-on: ubuntu-latest
+
+# # # #     steps:
+# # # #       - name: Checkout
+# # # #         uses: actions/checkout@v2
+
+# # # #       - name: Debug region
+# # # #         run: echo "Region = '${{ secrets.AWS_DEFAULT_REGION }}'"
+
+# # # #       - name: Configure AWS credentials
+# # # #         uses: aws-actions/configure-aws-credentials@v1
+# # # #         with:
+# # # #           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+# # # #           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+# # # #           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
 # # name: Deploy Application Docker Image to EC2 instance
 
 # # on:
@@ -5,6 +90,7 @@
 # #     branches: [main]
 
 # # jobs:
+
 # #   Continuous-Integration:
 # #     runs-on: ubuntu-latest
 
@@ -30,13 +116,13 @@
 # #           ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
 # #           IMAGE_TAG: latest
 # #         run: |
-# #           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .  
+# #           docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
 # #           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-# #           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
 # #   Continuous-Deployment:
 # #     needs: Continuous-Integration
 # #     runs-on: self-hosted
+    
 # #     steps:
 # #       - name: Checkout
 # #         uses: actions/checkout@v3
@@ -52,38 +138,24 @@
 # #         id: login-ecr
 # #         uses: aws-actions/amazon-ecr-login@v1
 
+# #       - name: Remove old container
+# #         run: |
+# #           docker stop app_container || true
+# #           docker rm app_container || true
+
 # #       - name: Run Docker Image to serve users
 # #         run: |
-# #          docker run -d -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" -e AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}" -e MONGODB_URL="${{ secrets.MONGODB_URL }}" -p 5000:5000 "${{ steps.login-ecr.outputs.registry }}"/"${{ secrets.ECR_REPO }}":latest
+# #           docker run -d \
+# #             --name app_container \
+# #             -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+# #             -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+# #             -e AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}" \
+# #             -e MONGODB_URL="${{ secrets.MONGODB_URL }}" \
+# #             -p 5000:5000 \
+# #             "${{ steps.login-ecr.outputs.registry }}"/"${{ secrets.ECR_REPO }}":latest
 
 
-
-
-# # # name: Deploy Application Docker Image to EC2 instance
-
-# # # on:
-# # #   push:
-# # #     branches: [main]
-
-# # # jobs:
-# # #   Continuous-Integration:
-# # #     runs-on: ubuntu-latest
-
-# # #     steps:
-# # #       - name: Checkout
-# # #         uses: actions/checkout@v2
-
-# # #       - name: Debug region
-# # #         run: echo "Region = '${{ secrets.AWS_DEFAULT_REGION }}'"
-
-# # #       - name: Configure AWS credentials
-# # #         uses: aws-actions/configure-aws-credentials@v1
-# # #         with:
-# # #           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-# # #           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-# # #           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-
-# name: Deploy Application Docker Image to EC2 instance
+# name: CI/CD Deploy to EC2
 
 # on:
 #   push:
@@ -93,24 +165,16 @@
 
 #   Continuous-Integration:
 #     runs-on: ubuntu-latest
-
 #     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v2
-
-#       - name: Configure AWS credentials
-#         uses: aws-actions/configure-aws-credentials@v1
+#       - uses: actions/checkout@v2
+#       - uses: aws-actions/configure-aws-credentials@v1
 #         with:
 #           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
 #           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 #           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-
-#       - name: Login to Amazon ECR
+#       - uses: aws-actions/amazon-ecr-login@v1
 #         id: login-ecr
-#         uses: aws-actions/amazon-ecr-login@v1
-
-#       - name: Build, tag, and push image to Amazon ECR
-#         id: build-image
+#       - name: Build & push image
 #         env:
 #           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
 #           ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
@@ -122,28 +186,20 @@
 #   Continuous-Deployment:
 #     needs: Continuous-Integration
 #     runs-on: self-hosted
-    
 #     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v3
-
-#       - name: Configure AWS credentials
-#         uses: aws-actions/configure-aws-credentials@v1
+#       - uses: actions/checkout@v3
+#       - uses: aws-actions/configure-aws-credentials@v1
 #         with:
 #           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
 #           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 #           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-
-#       - name: Login to Amazon ECR
+#       - uses: aws-actions/amazon-ecr-login@v1
 #         id: login-ecr
-#         uses: aws-actions/amazon-ecr-login@v1
-
-#       - name: Remove old container
+#       - name: Stop old container
 #         run: |
 #           docker stop app_container || true
 #           docker rm app_container || true
-
-#       - name: Run Docker Image to serve users
+#       - name: Run new container
 #         run: |
 #           docker run -d \
 #             --name app_container \
@@ -154,8 +210,7 @@
 #             -p 5000:5000 \
 #             "${{ steps.login-ecr.outputs.registry }}"/"${{ secrets.ECR_REPO }}":latest
 
-
-name: CI/CD Deploy to EC2
+name: CI/CD Deploy to EC2 via Self-Hosted Runner
 
 on:
   push:
@@ -166,41 +221,72 @@ jobs:
   Continuous-Integration:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: aws-actions/configure-aws-credentials@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-      - uses: aws-actions/amazon-ecr-login@v1
+          
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
         id: login-ecr
-      - name: Build & push image
+        
+      - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
           IMAGE_TAG: latest
         run: |
+          # Use --no-cache to ensure a fresh build and proper installation of all dependencies (like python-dotenv)
           docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
+  ---
+  
   Continuous-Deployment:
     needs: Continuous-Integration
-    runs-on: self-hosted
+    runs-on: self-hosted # This runs on your EC2 instance
+    
     steps:
-      - uses: actions/checkout@v3
-      - uses: aws-actions/configure-aws-credentials@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-      - uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
         id: login-ecr
-      - name: Stop old container
+        
+      - name: Pull Latest Docker Image
+        id: pull-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
         run: |
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          echo "Pulling latest image: $IMAGE_URI"
+          # Explicitly pull the image to ensure the self-hosted runner gets the fresh build
+          docker pull $IMAGE_URI
+          echo "::set-output name=image_uri::$IMAGE_URI"
+
+      - name: Stop and Remove Old Container
+        run: |
+          # Stop and remove the running container gracefully
           docker stop app_container || true
           docker rm app_container || true
-      - name: Run new container
+
+      - name: Run New Docker Container
         run: |
+          # Use the pulled image URI to run the new container
           docker run -d \
             --name app_container \
             -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
@@ -208,4 +294,4 @@ jobs:
             -e AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}" \
             -e MONGODB_URL="${{ secrets.MONGODB_URL }}" \
             -p 5000:5000 \
-            "${{ steps.login-ecr.outputs.registry }}"/"${{ secrets.ECR_REPO }}":latest
+            "${{ steps.pull-image.outputs.image_uri }}"
