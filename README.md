@@ -7,7 +7,7 @@ Welcome to this MLOps project, designed to demonstrate a robust pipeline for man
 ## 📁 Project Setup and Structure
 
 ### Step 1: Project Template
-- Start by executing the `template.py` file to create the initial project template, which includes the required folder structure and placeholder files.
+- Start by executing the `template.py` file and  to create the initial project template, which includes the required folder structure and placeholder files.
 
 ### Step 2: Package Management
 - Write the setup for importing local packages in `setup.py` and `pyproject.toml` files.
