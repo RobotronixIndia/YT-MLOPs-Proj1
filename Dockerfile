@@ -21,18 +21,28 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Copy requirements and install dependencies
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+# 1. Install External Dependencies
+# Copy only requirements.txt to leverage Docker cache
 COPY requirements.txt .
+
+# Install all packages, including 'python-dotenv'
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# 2. Install Local Project Package
+# Copy the entire project code (including the 'src' directory)
 COPY . .
 
-# Install the project as a package
+# Install the project from the current directory ('.') as an editable package.
+# This makes your 'src' package importable throughout the container environment.
 RUN pip install --no-cache-dir -e .
 
-# Expose FastAPI port
+# 3. Expose Port and Run Application
 EXPOSE 5000
 
-# Run the app
+# Run the FastAPI app using uvicorn
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]
