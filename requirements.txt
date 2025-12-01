@@ -6,6 +6,7 @@ plotly
 seaborn
 scikit-learn
 pymongo
+python-dotenv
 from_root
 dill
 certifi
