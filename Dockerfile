@@ -19,20 +19,20 @@
 
 FROM python:3.10-slim
 
-# Set the working directory
 WORKDIR /app
 
-# Copy only requirements first (best practice)
+# Copy requirements and install dependencies
 COPY requirements.txt .
-
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application
+# Copy project
 COPY . .
+
+# Install the project as a package
+RUN pip install --no-cache-dir -e .
 
 # Expose FastAPI port
 EXPOSE 5000
 
-# Run the FastAPI application
+# Run the app
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]
